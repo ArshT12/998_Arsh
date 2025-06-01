@@ -1,7 +1,6 @@
-
 import axios from 'axios';
 
-const API_URL = 'https://huggingface.co/spaces/ArshTandon/deepfake-detection-api';
+const API_URL = 'https://arshtandon-deepfake-detection-api-2.hf.space/detect';
 
 export type DetectionResult = {
   isDeepfake: boolean;
@@ -11,60 +10,109 @@ export type DetectionResult = {
 
 export const deepfakeApi = {
   /**
-   * Send audio file to the Hugging Face API for deepfake detection
+   * Send audio file to the FastAPI endpoint for deepfake detection
    * @param audioFile - Audio file for analysis
    * @returns Detection result with confidence score
    */
-  async detectAudio(audioFile: File | Blob): Promise<DetectionResult> {
+  async detectAudio(audioFile: File | Blob, recordingContext?: any): Promise<DetectionResult> {
+    console.log('🔍 Starting audio detection...');
+    console.log('📱 Platform:', navigator.platform);
+    console.log('📱 User Agent:', navigator.userAgent);
+    console.log('📂 File type:', audioFile.type);
+    console.log('📏 File size:', audioFile.size);
+    
+    // Log MediaRecorder context if provided
+    if (recordingContext) {
+      console.log('🎙️ Recording Context:', {
+        mimeType: recordingContext.mimeType,
+        audioBitsPerSecond: recordingContext.audioBitsPerSecond,
+        state: recordingContext.state,
+        stream: recordingContext.stream ? {
+          active: recordingContext.stream.active,
+          id: recordingContext.stream.id
+        } : 'No stream info'
+      });
+    }
+    
+    // Log detailed audio blob info
+    console.log('Audio blob details:', {
+      size: audioFile.size,
+      type: audioFile.type,
+      lastModified: audioFile instanceof File ? audioFile.lastModified : 'N/A',
+      name: audioFile instanceof File ? audioFile.name : 'Generated blob'
+    });
+    
     try {
       const formData = new FormData();
-      formData.append('audio', audioFile);
+      
+      // Ensure proper file type and name
+      const file = audioFile instanceof File 
+        ? audioFile 
+        : new File([audioFile], "recorded-audio.wav", { type: "audio/wav" });
+      
+      console.log('Final file type:', file.type);
+      console.log('Final file name:', file.name);
+      console.log('Final file size:', file.size);
+      console.log('Sending to API:', API_URL);
+      
+      formData.append('audio', file);
 
-      // Try to make the API call
+      const startTime = performance.now();
+      
       const response = await axios.post(API_URL, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 30000, // 30 second timeout
       });
 
-      const rawResponse = response.data;
-      
-      // Parse the response
-      // Expected format: "🔴 Deepfake detected!" or "🟢 Audio appears authentic." with confidence percentage
-      const isDeepfake = rawResponse.includes('Deepfake detected');
-      
-      // Extract confidence percentage from response (assumes format like "XX.XX%")
-      const confidenceMatch = rawResponse.match(/(\d+\.\d+)%/);
-      const confidence = confidenceMatch ? parseFloat(confidenceMatch[1]) : 0;
+      const endTime = performance.now();
+      const requestDuration = endTime - startTime;
 
-      return {
-        isDeepfake,
-        confidence,
-        rawResponse,
+      console.log('API Response Status:', response.status);
+      console.log('API Response Time:', `${requestDuration.toFixed(2)}ms`);
+      console.log('API Response Data:', response.data);
+      
+      const data = response.data;
+      
+      const result = {
+        isDeepfake: data.isDeepfake,
+        confidence: data.confidence,
+        rawResponse: data.message,
       };
+      
+      console.log('✅ Final Result:', result);
+      console.log('🔍 Confidence Score:', `${result.confidence.toFixed(2)}%`);
+      console.log('🎯 Detection:', result.isDeepfake ? '🔴 DEEPFAKE' : '🟢 AUTHENTIC');
+      
+      return result;
+      
     } catch (error) {
-      // Handle error for development - provide mock response
-      console.error('Error detecting audio:', error);
-      console.log('Falling back to simulated detection response');
+      console.error('❌ Error detecting audio:', error);
       
-      // Generate a random result for testing purposes
-      // 30% chance of being classified as deepfake
-      const mockIsDeepfake = Math.random() < 0.3;
-      
-      // Generate a confidence between 65-95%
-      const mockConfidence = mockIsDeepfake 
-        ? Math.floor(75 + Math.random() * 20) // Higher confidence for deepfakes (75-95%)
-        : Math.floor(65 + Math.random() * 30); // Variable confidence for authentic (65-95%)
-      
-      const mockResponse = mockIsDeepfake 
-        ? `🔴 Deepfake detected! (${mockConfidence}% confidence)` 
-        : `🟢 Audio appears authentic. (${mockConfidence}% confidence)`;
+      if (axios.isAxiosError(error)) {
+        console.log('❌ Axios Error Details:');
+        console.log('  - Status:', error.response?.status);
+        console.log('  - Data:', error.response?.data);
+        console.log('  - Headers:', error.response?.headers);
+        console.log('  - Request made:', !!error.request);
+        console.log('  - Response received:', !!error.response);
+        console.log('  - Timeout:', error.code === 'ECONNABORTED');
         
-      return {
-        isDeepfake: mockIsDeepfake,
-        confidence: mockConfidence,
-        rawResponse: mockResponse,
-      };
+        if (error.response?.status === 400) {
+          throw new Error('Invalid audio file format. Please upload a WAV or MP3 file.');
+        } else if (error.response?.status === 500) {
+          throw new Error('Server error during audio analysis. Please try again.');
+        } else if (error.response) {
+          throw new Error(`API Error: ${error.response.data?.detail || error.response.statusText}`);
+        } else if (error.request) {
+          throw new Error('Network error: Unable to reach the API. Check your internet connection.');
+        }
+      } else {
+        console.log('❌ Non-Axios Error:', error);
+      }
+      
+      throw new Error('An unexpected error occurred during audio analysis');
     }
   }
 };
