@@ -2,6 +2,8 @@
 
 A machine learning system for detecting AI-generated voice content using XGBoost classification.
 
+**Try the algorithm:** [Deepfake Detection API](https://huggingface.co/spaces/ArshTandon/deepfake-detection-api)
+
 ## Project Structure
 
 ```
@@ -44,6 +46,10 @@ Cross-platform mobile application for real-time deepfake detection. See the app'
 ## Model Performance
 
 The XGBoost classifier achieves 98.93% accuracy on test data with robust performance across different audio qualities.
+
+## Try the Algorithm
+
+Test the trained model directly: [Deepfake Detection API](https://huggingface.co/spaces/ArshTandon/deepfake-detection-api)
 
 ## Technologies
 
