@@ -10,7 +10,6 @@ export type DetectionResult = {
 
 export const deepfakeApi = {
   /**
-   * Send audio file to the FastAPI endpoint for deepfake detection
    * @param audioFile - Audio file for analysis
    * @returns Detection result with confidence score
    */
@@ -21,7 +20,6 @@ export const deepfakeApi = {
     console.log('📂 File type:', audioFile.type);
     console.log('📏 File size:', audioFile.size);
     
-    // Log MediaRecorder context if provided
     if (recordingContext) {
       console.log('🎙️ Recording Context:', {
         mimeType: recordingContext.mimeType,

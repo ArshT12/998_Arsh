@@ -51,7 +51,7 @@ Voice Guardian Shield is a mobile application that monitors phone calls in real-
 ### Option 1: Web Testing (Recommended for Quick Evaluation)
 ```bash
 # 1. Clone and setup
-git clone https://github.com/ArshT12/voice-guardian-shield.git
+git clone https://github.com/ArshT12/998_Arsh.git
 cd voice-guardian-shield
 
 # 2. Install dependencies
@@ -69,7 +69,7 @@ npm run dev
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/ArshT12/voice-guardian-shield.git
+git clone https://github.com/ArshT12/998_Arsh.git
 cd voice-guardian-shield
 
 # 2. Install dependencies
